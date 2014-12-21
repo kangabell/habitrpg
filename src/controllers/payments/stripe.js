@@ -4,6 +4,8 @@ var async = require('async');
 var payments = require('./index');
 var User = require('mongoose').model('User');
 var shared = require('habitrpg-shared');
+var mongoose = require('mongoose');
+var cc = require('coupon-code');
 
 /*
  Setup Stripe response when posting payment
@@ -17,12 +19,23 @@ exports.checkout = function(req, res, next) {
   async.waterfall([
     function(cb){
       if (sub) {
-        stripe.customers.create({
-          email: req.body.email,
-          metadata: {uuid: user._id},
-          card: token,
-          plan: sub.key
-        }, cb);
+        async.waterfall([
+          function(cb2){
+            if (!req.query.coupon) return cb2(null, null);
+            mongoose.model('Coupon').findOne({_id:cc.validate(req.query.coupon), event:'google_6mo'}, cb2);
+          },
+          function(coupon, cb2){
+            var customer = {
+              email: req.body.email,
+              metadata: {uuid: user._id},
+              card: token,
+              plan: sub.key
+            };
+            if (coupon) customer.coupon = 'google_6mo';
+            console.log(customer);
+            stripe.customers.create(customer, cb2);
+          }
+        ], cb);
       } else {
         stripe.charges.create({
           amount: !gift ? "500" //"500" = $5

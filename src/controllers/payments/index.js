@@ -10,6 +10,8 @@ var paypal = require('./paypal');
 var members = require('../members')
 var async = require('async');
 var iap = require('./iap');
+var mongoose= require('mongoose');
+var cc = require('coupon-code');
 
 function revealMysteryItems(user) {
   _.each(shared.content.gear.flat, function(item) {
@@ -112,6 +114,14 @@ exports.buyGems = function(data, cb) {
     function(cb2){data.user.save(cb2)},
     function(cb2){data.gift ? data.gift.member.save(cb2) : cb2(null);}
   ], cb);
+}
+
+exports.validCoupon = function(req, res, next){
+  mongoose.model('Coupon').findOne({_id:cc.validate(req.params.code), event:'google_6mo'}, function(err, coupon){
+    if (err) return next(err);
+    if (!coupon) return res.json(401, {err:"Invalid coupon code"});
+    return res.send(200);
+  });
 }
 
 exports.stripeCheckout = stripe.checkout;

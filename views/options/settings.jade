@@ -250,15 +250,19 @@ script(id='partials/options.settings.subscription.html',type='text/ng-template')
               li Mystic Hourglasses: {{user.purchased.plan.consecutive.trinkets}}
         div(ng-if='!user.purchased.plan.customerId || (user.purchased.plan.customerId && user.purchased.plan.dateTerminated)')
           .form-group
-            each block in env.Content.subscriptionBlocks
-              .radio
-                label
-                  input(type="radio", name="subRadio", value="#{block.months}", ng-model='_subscription.months')
-                  //-| #{block.months} Month(s) Recurring: $#{block.price} #{env.t('monthUSD')}
-                  | Recurring $#{block.price} each #{block.months} Month(s)
+            .radio(ng-repeat='block in Content.subscriptionBlocks | toArray | orderBy:"months"')
+              label
+                input(type="radio", name="subRadio", ng-value="block.months", ng-model='_subscription.months')
+                | Recurring <span ng-class='{"line-through":block.discount}'>${{block.price}}</span><span class='label label-success' ng-show='block.discount'>${{block.discount}}</span> each {{block.months}} Month(s)
+
+          .form-inline
+            .form-group
+              input.form-control(type='text', ng-model='_subscription.coupon', placeholder='Promo Code')
+            .form-group
+              button.btn.btn-small(type='button',ng-click='applyCoupon(_subscription.coupon)') Apply
 
           h3(ng-if='(user.purchased.plan.customerId && user.purchased.plan.dateTerminated)') Resubscribe
-          a.btn.btn-primary(ng-click='Payments.showStripe({subscription:_subscription.months})', ng-disabled='!_subscription.months') Card
+          a.btn.btn-primary(ng-click='Payments.showStripe({subscription:_subscription.months, coupon:_subscription.coupon})', ng-disabled='!_subscription.months') Card
           a.btn.btn-warning(href='/paypal/subscribe?_id={{user._id}}&apiToken={{user.apiToken}}&sub={{_subscription.months}}', ng-disabled='!_subscription.months') PayPal
         div(ng-if='user.purchased.plan.customerId')
           .btn.btn-primary(ng-if='!user.purchased.plan.dateTerminated && user.purchased.plan.paymentMethod=="Stripe"', ng-click='Payments.showStripeEdit()') Update Card

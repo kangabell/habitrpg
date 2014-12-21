@@ -23,7 +23,7 @@ function($rootScope, User, $http, Content) {
         : false;
     sub = sub && Content.subscriptionBlocks[sub];
     var amount = // 500 = $5
-      sub ? sub.price*100
+      sub ? (sub.discount || sub.price)*100
         : data.gift && data.gift.type=='gems' ? data.gift.gems.amount/4*100
         : 500;
     StripeCheckout.open({
@@ -37,6 +37,7 @@ function($rootScope, User, $http, Content) {
         var url = '/stripe/checkout?a=a'; // just so I can concat &x=x below
         if (data.gift) url += '&gift=' + Payments.encodeGift(data.uuid, data.gift);
         if (data.subscription) url += '&sub='+sub.months;
+        if (data.coupon) url += '&coupon='+data.coupon;
         $http.post(url, res).success(function() {
           window.location.reload(true);
         }).error(function(res) {

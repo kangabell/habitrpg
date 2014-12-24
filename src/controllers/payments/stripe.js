@@ -21,10 +21,12 @@ exports.checkout = function(req, res, next) {
       if (sub) {
         async.waterfall([
           function(cb2){
-            if (!req.query.coupon) return cb2(null, null);
-            mongoose.model('Coupon').findOne({_id:cc.validate(req.query.coupon), event:'google_6mo'}, cb2);
+            if (!sub.discount) return cb2(null, null);
+            if (!req.query.coupon) return cb2('Please provide a coupon code for this plan.');
+            mongoose.model('Coupon').findOne({_id:cc.validate(req.query.coupon), event:sub.key}, cb2);
           },
           function(coupon, cb2){
+            if (sub.discount && !coupon) return cb2('Invalid coupon code.');
             var customer = {
               email: req.body.email,
               metadata: {uuid: user._id},
@@ -39,7 +41,7 @@ exports.checkout = function(req, res, next) {
       } else {
         stripe.charges.create({
           amount: !gift ? "500" //"500" = $5
-            : gift.type=='subscription' ? ""+shared.content.subscriptionBlocks[gift.subscription.months].price*100
+            : gift.type=='subscription' ? ""+shared.content.subscriptionBlocks[gift.subscription.key].price*100
             : ""+gift.gems.amount/4*100,
           currency: "usd",
           card: token

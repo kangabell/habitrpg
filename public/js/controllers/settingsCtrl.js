@@ -184,7 +184,10 @@ habitrpg.controller('SettingsCtrl',
       $http.get(ApiUrlService.get() + '/api/v2/coupons/valid-discount/'+coupon)
       .success(function(){
         Notification.text("Coupon applied!");
-        $scope.Content.subscriptionBlocks["6"].discount = 24;
+        var subs = $scope.Content.subscriptionBlocks;
+        subs["basic_6mo"].discount = true;
+        subs["google_6mo"].discount = false;
+        subs["google_6mo"].original = subs["basic_6mo"].price;
       });
     }
   }
